@@ -50,3 +50,67 @@ pub fn extract_frontmatter<'a>(
 
     Ok((frontmatter, body))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    fn test_path() -> PathBuf {
+        PathBuf::from("test.md")
+    }
+
+    #[test]
+    fn valid_frontmatter_with_all_fields() {
+        let content = "---\nname: my-skill\ndescription: A test skill\ndependencies:\n  - dep-a\ninputs:\n  - input-1\noutputs:\n  - output-1\n---\n\nBody content here.";
+        let (frontmatter, body) = extract_frontmatter(content, &test_path()).unwrap();
+
+        assert_eq!(frontmatter.name, "my-skill");
+        assert_eq!(frontmatter.description, "A test skill");
+        assert_eq!(frontmatter.dependencies, vec!["dep-a"]);
+        assert_eq!(frontmatter.inputs, vec!["input-1"]);
+        assert_eq!(frontmatter.outputs, vec!["output-1"]);
+        assert_eq!(body, "Body content here.");
+    }
+
+    #[test]
+    fn valid_frontmatter_with_minimal_fields() {
+        let content = "---\nname: minimal\n---\n\nSome body.";
+        let (frontmatter, body) = extract_frontmatter(content, &test_path()).unwrap();
+
+        assert_eq!(frontmatter.name, "minimal");
+        assert_eq!(frontmatter.description, "");
+        assert!(frontmatter.dependencies.is_empty());
+        assert_eq!(body, "Some body.");
+    }
+
+    #[test]
+    fn missing_opening_delimiter() {
+        let content = "name: no-delimiter\n---\nBody.";
+        let result = extract_frontmatter(content, &test_path());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn missing_closing_delimiter() {
+        let content = "---\nname: unclosed\nBody without closing.";
+        let result = extract_frontmatter(content, &test_path());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn invalid_yaml_content() {
+        let content = "---\n: : : broken yaml [[\n---\nBody.";
+        let result = extract_frontmatter(content, &test_path());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn empty_body_after_frontmatter() {
+        let content = "---\nname: no-body\n---\n";
+        let (frontmatter, body) = extract_frontmatter(content, &test_path()).unwrap();
+
+        assert_eq!(frontmatter.name, "no-body");
+        assert_eq!(body, "");
+    }
+}
