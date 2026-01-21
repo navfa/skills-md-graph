@@ -63,3 +63,55 @@ fn parse_heading(line: &str) -> Option<(u8, &str)> {
 
     None
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn empty_body() {
+        let result = parse_body("");
+        assert!(result.sections.is_empty());
+        assert_eq!(result.raw, "");
+    }
+
+    #[test]
+    fn multiple_sections() {
+        let content = "## Description\n\nThis is the description.\n\n## Usage\n\nHow to use it.\n\n### Example\n\nSome example code.";
+        let result = parse_body(content);
+
+        assert_eq!(result.sections.len(), 3);
+
+        assert_eq!(result.sections[0].heading, "Description");
+        assert_eq!(result.sections[0].level, 2);
+        assert_eq!(result.sections[0].content, "This is the description.");
+
+        assert_eq!(result.sections[1].heading, "Usage");
+        assert_eq!(result.sections[1].level, 2);
+        assert_eq!(result.sections[1].content, "How to use it.");
+
+        assert_eq!(result.sections[2].heading, "Example");
+        assert_eq!(result.sections[2].level, 3);
+        assert_eq!(result.sections[2].content, "Some example code.");
+    }
+
+    #[test]
+    fn body_without_headings() {
+        let content = "Just some text\nwithout any headings.";
+        let result = parse_body(content);
+
+        assert!(result.sections.is_empty());
+        assert_eq!(result.raw, content);
+    }
+
+    #[test]
+    fn section_with_empty_content() {
+        let content = "## Empty Section\n## Next Section\n\nHas content.";
+        let result = parse_body(content);
+
+        assert_eq!(result.sections.len(), 2);
+        assert_eq!(result.sections[0].heading, "Empty Section");
+        assert_eq!(result.sections[0].content, "");
+        assert_eq!(result.sections[1].content, "Has content.");
+    }
+}
