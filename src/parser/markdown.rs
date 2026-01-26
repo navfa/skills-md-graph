@@ -54,7 +54,7 @@ fn parse_heading(line: &str) -> Option<(u8, &str)> {
     let trimmed = line.trim_start();
     let hash_count = trimmed.bytes().take_while(|&byte| byte == b'#').count();
 
-    if hash_count >= 2 && hash_count <= 6 {
+    if (2..=6).contains(&hash_count) {
         let rest = trimmed[hash_count..].trim();
         if !rest.is_empty() {
             return Some((hash_count as u8, rest));
