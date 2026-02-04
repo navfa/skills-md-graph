@@ -82,3 +82,77 @@ pub fn render_png(graph: &SkillGraph, output_path: &Path) -> Result<(), SkillErr
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::graph::build_graph;
+    use crate::model::{Skill, SkillSet};
+
+    fn make_skill(name: &str, dependencies: Vec<&str>) -> Skill {
+        Skill {
+            name: name.to_string(),
+            description: format!("{name} description"),
+            dependencies: dependencies.into_iter().map(String::from).collect(),
+            inputs: vec![],
+            outputs: vec![],
+            body: String::new(),
+        }
+    }
+
+    #[test]
+    fn dot_contains_digraph_header() {
+        let skill_set = SkillSet {
+            skills: vec![make_skill("alpha", vec![])],
+            warnings: vec![],
+        };
+        let graph = build_graph(&skill_set);
+        let dot = render_dot(&graph);
+
+        assert!(dot.starts_with("digraph skills {"));
+        assert!(dot.contains("rankdir=LR"));
+        assert!(dot.contains("shape=box, style=rounded"));
+    }
+
+    #[test]
+    fn dot_contains_node_declarations() {
+        let skill_set = SkillSet {
+            skills: vec![make_skill("alpha", vec![]), make_skill("beta", vec![])],
+            warnings: vec![],
+        };
+        let graph = build_graph(&skill_set);
+        let dot = render_dot(&graph);
+
+        assert!(dot.contains("\"alpha\" [label=\"alpha\"]"));
+        assert!(dot.contains("\"beta\" [label=\"beta\"]"));
+    }
+
+    #[test]
+    fn dot_contains_edges() {
+        let skill_set = SkillSet {
+            skills: vec![
+                make_skill("alpha", vec![]),
+                make_skill("beta", vec!["alpha"]),
+            ],
+            warnings: vec![],
+        };
+        let graph = build_graph(&skill_set);
+        let dot = render_dot(&graph);
+
+        assert!(dot.contains("\"beta\" -> \"alpha\""));
+    }
+
+    #[test]
+    fn dot_empty_graph() {
+        let skill_set = SkillSet {
+            skills: vec![],
+            warnings: vec![],
+        };
+        let graph = build_graph(&skill_set);
+        let dot = render_dot(&graph);
+
+        assert!(dot.contains("digraph skills {"));
+        assert!(dot.ends_with("}\n"));
+        assert!(!dot.contains("->"));
+    }
+}
