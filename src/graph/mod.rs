@@ -1,3 +1,5 @@
+pub mod dot;
+
 use std::collections::HashMap;
 
 use petgraph::graph::{DiGraph, NodeIndex};

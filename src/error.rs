@@ -19,4 +19,10 @@ pub enum SkillError {
 
     #[error("no .md skill files found in {path}\n  hint: add markdown files with YAML frontmatter to this directory")]
     NoSkillFiles { path: PathBuf },
+
+    #[error("graphviz `dot` command not found\n  hint: install graphviz (brew install graphviz / apt install graphviz)")]
+    GraphvizNotFound,
+
+    #[error("graphviz rendering failed: {message}")]
+    GraphvizFailed { message: String },
 }
