@@ -1,4 +1,5 @@
 pub mod dot;
+pub mod stats;
 
 use std::collections::HashMap;
 
