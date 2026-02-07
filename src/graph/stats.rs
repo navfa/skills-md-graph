@@ -53,3 +53,120 @@ impl std::fmt::Display for GraphStats {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::graph::build_graph;
+    use crate::model::{Skill, SkillSet};
+
+    fn make_skill(name: &str, dependencies: Vec<&str>) -> Skill {
+        Skill {
+            name: name.to_string(),
+            description: format!("{name} description"),
+            dependencies: dependencies.into_iter().map(String::from).collect(),
+            inputs: vec![],
+            outputs: vec![],
+            body: String::new(),
+        }
+    }
+
+    #[test]
+    fn counts_skills_and_edges() {
+        let skill_set = SkillSet {
+            skills: vec![
+                make_skill("alpha", vec![]),
+                make_skill("beta", vec!["alpha"]),
+                make_skill("gamma", vec!["alpha", "beta"]),
+            ],
+            warnings: vec![],
+        };
+        let graph = build_graph(&skill_set);
+        let stats = compute_stats(&graph);
+
+        assert_eq!(stats.skill_count, 3);
+        assert_eq!(stats.edge_count, 3);
+    }
+
+    #[test]
+    fn detects_orphan_skills() {
+        let skill_set = SkillSet {
+            skills: vec![
+                make_skill("connected", vec![]),
+                make_skill("uses-connected", vec!["connected"]),
+                make_skill("lonely", vec![]),
+            ],
+            warnings: vec![],
+        };
+        let graph = build_graph(&skill_set);
+        let stats = compute_stats(&graph);
+
+        assert_eq!(stats.orphan_skills, vec!["lonely"]);
+    }
+
+    #[test]
+    fn no_orphans_when_all_connected() {
+        let skill_set = SkillSet {
+            skills: vec![
+                make_skill("alpha", vec![]),
+                make_skill("beta", vec!["alpha"]),
+            ],
+            warnings: vec![],
+        };
+        let graph = build_graph(&skill_set);
+        let stats = compute_stats(&graph);
+
+        assert!(stats.orphan_skills.is_empty());
+    }
+
+    #[test]
+    fn detects_cycle() {
+        let skill_set = SkillSet {
+            skills: vec![
+                make_skill("alpha", vec!["beta"]),
+                make_skill("beta", vec!["alpha"]),
+            ],
+            warnings: vec![],
+        };
+        let graph = build_graph(&skill_set);
+        let stats = compute_stats(&graph);
+
+        assert!(stats.has_cycles);
+    }
+
+    #[test]
+    fn no_cycle_in_dag() {
+        let skill_set = SkillSet {
+            skills: vec![
+                make_skill("alpha", vec![]),
+                make_skill("beta", vec!["alpha"]),
+                make_skill("gamma", vec!["beta"]),
+            ],
+            warnings: vec![],
+        };
+        let graph = build_graph(&skill_set);
+        let stats = compute_stats(&graph);
+
+        assert!(!stats.has_cycles);
+    }
+
+    #[test]
+    fn display_formats_correctly() {
+        let skill_set = SkillSet {
+            skills: vec![
+                make_skill("alpha", vec![]),
+                make_skill("beta", vec!["alpha"]),
+                make_skill("lonely", vec![]),
+            ],
+            warnings: vec![],
+        };
+        let graph = build_graph(&skill_set);
+        let stats = compute_stats(&graph);
+        let output = stats.to_string();
+
+        assert!(output.contains("Skills: 3"));
+        assert!(output.contains("Dependencies: 1"));
+        assert!(output.contains("Cycles detected: no"));
+        assert!(output.contains("lonely"));
+    }
+}
