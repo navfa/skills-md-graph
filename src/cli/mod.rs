@@ -20,4 +20,22 @@ pub enum Command {
         #[arg(long)]
         json: bool,
     },
+
+    /// Build and render a dependency graph
+    Graph {
+        /// Path to the directory containing skill files
+        path: PathBuf,
+
+        /// Write DOT output to a file instead of stdout
+        #[arg(long)]
+        output: Option<PathBuf>,
+
+        /// Generate a PNG image (requires Graphviz installed)
+        #[arg(long)]
+        png: Option<PathBuf>,
+
+        /// Display graph statistics
+        #[arg(long)]
+        stats: bool,
+    },
 }
