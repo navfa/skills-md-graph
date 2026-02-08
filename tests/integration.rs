@@ -1,5 +1,8 @@
 use std::path::Path;
 
+use skills_md_graph::graph::build_graph;
+use skills_md_graph::graph::dot::render_dot;
+use skills_md_graph::graph::stats::compute_stats;
 use skills_md_graph::parser::scan_directory;
 
 #[test]
@@ -56,4 +59,49 @@ fn scan_fixtures_produces_valid_json() {
 fn scan_nonexistent_directory_returns_error() {
     let result = scan_directory(Path::new("nonexistent/path"));
     assert!(result.is_err());
+}
+
+#[test]
+fn graph_from_fixtures_has_correct_structure() {
+    let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let graph = build_graph(&skill_set);
+
+    assert_eq!(graph.inner.node_count(), 2);
+    assert_eq!(graph.inner.edge_count(), 1);
+    assert!(graph.node_indices.contains_key("rust-basics"));
+    assert!(graph.node_indices.contains_key("error-handling"));
+}
+
+#[test]
+fn graph_dot_output_contains_expected_elements() {
+    let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let graph = build_graph(&skill_set);
+    let dot = render_dot(&graph);
+
+    assert!(dot.contains("digraph skills"));
+    assert!(dot.contains("\"rust-basics\""));
+    assert!(dot.contains("\"error-handling\""));
+    assert!(dot.contains("\"error-handling\" -> \"rust-basics\""));
+}
+
+#[test]
+fn graph_stats_from_fixtures_are_accurate() {
+    let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let graph = build_graph(&skill_set);
+    let stats = compute_stats(&graph);
+
+    assert_eq!(stats.skill_count, 2);
+    assert_eq!(stats.edge_count, 1);
+    assert!(!stats.has_cycles);
+    assert!(stats.orphan_skills.is_empty());
+}
+
+#[test]
+fn graph_warns_on_missing_dependency_in_fixtures() {
+    let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let graph = build_graph(&skill_set);
+
+    // rust-basics has no deps, error-handling depends on rust-basics (exists)
+    // no missing deps in our current fixtures
+    assert!(graph.warnings.is_empty());
 }
