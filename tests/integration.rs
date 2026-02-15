@@ -1,9 +1,12 @@
 use std::path::Path;
 
+use skills_md_graph::analysis::{Diagnostic, has_errors, lint};
+use skills_md_graph::export::{ExportFormat, render_export};
 use skills_md_graph::graph::build_graph;
 use skills_md_graph::graph::dot::render_dot;
 use skills_md_graph::graph::stats::compute_stats;
 use skills_md_graph::parser::scan_directory;
+use skills_md_graph::query::{query_deps, query_path, query_uses};
 
 #[test]
 fn scan_fixtures_finds_valid_skills() {
@@ -104,4 +107,85 @@ fn graph_warns_on_missing_dependency_in_fixtures() {
     // rust-basics has no deps, error-handling depends on rust-basics (exists)
     // no missing deps in our current fixtures
     assert!(graph.warnings.is_empty());
+}
+
+// --- Epic 3: analysis, query, export ---
+
+#[test]
+fn lint_fixtures_has_no_errors() {
+    let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let graph = build_graph(&skill_set);
+    let diagnostics = lint(&graph);
+
+    assert!(!has_errors(&diagnostics));
+}
+
+#[test]
+fn lint_fixtures_reports_isolated_invalid_warning() {
+    // skill-invalid.md is skipped at parse time, so only 2 valid skills remain
+    // No isolated skills since error-handling depends on rust-basics
+    let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let graph = build_graph(&skill_set);
+    let diagnostics = lint(&graph);
+
+    let isolated: Vec<_> = diagnostics
+        .iter()
+        .filter(|diagnostic| matches!(diagnostic, Diagnostic::Isolated { .. }))
+        .collect();
+    assert!(isolated.is_empty());
+}
+
+#[test]
+fn query_uses_on_fixtures() {
+    let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let graph = build_graph(&skill_set);
+
+    let users = query_uses(&graph, "rust-basics").unwrap();
+    assert_eq!(users, vec!["error-handling"]);
+}
+
+#[test]
+fn query_deps_on_fixtures() {
+    let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let graph = build_graph(&skill_set);
+
+    let dependencies = query_deps(&graph, "error-handling").unwrap();
+    assert_eq!(dependencies, vec!["rust-basics"]);
+}
+
+#[test]
+fn query_path_on_fixtures() {
+    let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let graph = build_graph(&skill_set);
+
+    let path_result = query_path(&graph, "error-handling", "rust-basics").unwrap();
+    assert_eq!(path_result, vec!["error-handling", "rust-basics"]);
+}
+
+#[test]
+fn query_unknown_skill_returns_none() {
+    let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let graph = build_graph(&skill_set);
+
+    assert!(query_uses(&graph, "nonexistent").is_none());
+}
+
+#[test]
+fn export_rdf_from_fixtures() {
+    let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let graph = build_graph(&skill_set);
+    let turtle = render_export(&graph, ExportFormat::Rdf);
+
+    assert!(turtle.contains("@prefix skill:"));
+    assert!(turtle.contains("skill:dependsOn"));
+}
+
+#[test]
+fn export_cypher_from_fixtures() {
+    let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let graph = build_graph(&skill_set);
+    let cypher = render_export(&graph, ExportFormat::Cypher);
+
+    assert!(cypher.contains("CREATE (:Skill"));
+    assert!(cypher.contains("DEPENDS_ON"));
 }
