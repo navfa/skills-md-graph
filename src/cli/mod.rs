@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Debug, Parser)]
 #[command(name = "skill-graph", about = "Analyze and graph skill dependencies")]
@@ -38,4 +38,48 @@ pub enum Command {
         #[arg(long)]
         stats: bool,
     },
+
+    /// Run diagnostics on skill files (cycles, isolation, missing deps)
+    Lint {
+        /// Path to the directory containing skill files
+        path: PathBuf,
+    },
+
+    /// Query the skill dependency graph
+    Query {
+        /// Path to the directory containing skill files
+        path: PathBuf,
+
+        /// Find skills that depend on this skill
+        #[arg(long)]
+        uses: Option<String>,
+
+        /// Find all transitive dependencies of this skill
+        #[arg(long)]
+        deps: Option<String>,
+
+        /// Find shortest path between two skills (comma-separated: "from,to")
+        #[arg(long, value_delimiter = ',', num_args = 2)]
+        path_between: Option<Vec<String>>,
+
+        /// Output results as JSON
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Export the skill graph to external formats
+    Export {
+        /// Path to the directory containing skill files
+        path: PathBuf,
+
+        /// Export format
+        #[arg(long, value_enum)]
+        format: ExportFormatArg,
+    },
+}
+
+#[derive(Debug, Clone, ValueEnum)]
+pub enum ExportFormatArg {
+    Rdf,
+    Cypher,
 }

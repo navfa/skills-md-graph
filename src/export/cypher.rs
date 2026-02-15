@@ -11,8 +11,8 @@ pub fn render_cypher(graph: &SkillGraph) -> String {
 
         writeln!(
             output,
-            "CREATE (:{} {{name: '{}', description: '{}'}});",
-            "Skill", node.name, escaped_description
+            "CREATE (:Skill {{name: '{}', description: '{}'}});",
+            node.name, escaped_description
         )
         .unwrap();
     }
