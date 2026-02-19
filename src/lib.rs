@@ -1,5 +1,6 @@
 pub mod analysis;
 pub mod cli;
+pub mod config;
 pub mod error;
 pub mod export;
 pub mod graph;
