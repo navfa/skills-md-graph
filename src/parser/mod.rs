@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
@@ -18,7 +19,8 @@ pub fn parse_skill_file(file_path: &Path) -> Result<Skill, SkillError> {
         source,
     })?;
 
-    let (frontmatter, body_content) = extract_frontmatter(&content, file_path)?;
+    let no_aliases = HashMap::new();
+    let (frontmatter, body_content) = extract_frontmatter(&content, file_path, &no_aliases)?;
     let body = parse_body(body_content);
 
     Ok(Skill {
