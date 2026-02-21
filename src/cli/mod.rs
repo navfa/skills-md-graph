@@ -19,6 +19,18 @@ pub enum Command {
         /// Output results as JSON
         #[arg(long)]
         json: bool,
+
+        /// Number of parallel workers for async scan
+        #[arg(long)]
+        workers: Option<usize>,
+
+        /// Show a progress bar during scan
+        #[arg(long)]
+        progress: bool,
+
+        /// Path to a .skill-graph.toml config file
+        #[arg(long)]
+        config: Option<PathBuf>,
     },
 
     /// Build and render a dependency graph

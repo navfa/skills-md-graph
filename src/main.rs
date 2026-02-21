@@ -6,19 +6,33 @@ use clap::Parser;
 
 use skills_md_graph::analysis::{has_errors, lint};
 use skills_md_graph::cli::{Cli, Command, ExportFormatArg};
+use skills_md_graph::config::load_config;
 use skills_md_graph::export::{ExportFormat, render_export};
 use skills_md_graph::graph::build_graph;
 use skills_md_graph::graph::dot::{render_dot, render_png};
 use skills_md_graph::graph::stats::compute_stats;
-use skills_md_graph::parser::scan_directory;
+use skills_md_graph::parser::{scan_directory, scan_directory_async};
 use skills_md_graph::query::{query_deps, query_path, query_uses};
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Command::Scan { path, json } => {
-            let skill_set = scan_directory(&path)?;
+        Command::Scan {
+            path,
+            json,
+            workers,
+            progress,
+            config,
+        } => {
+            let mut cfg = load_config(config.as_deref(), &path);
+            if let Some(w) = workers {
+                cfg.scan.workers = w;
+            }
+
+            let skill_set =
+                scan_directory_async(&path, &cfg.scan, &cfg.schema.aliases, progress).await?;
 
             if json {
                 println!("{}", serde_json::to_string_pretty(&skill_set)?);
