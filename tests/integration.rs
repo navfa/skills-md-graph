@@ -1,11 +1,13 @@
+use std::collections::HashMap;
 use std::path::Path;
 
 use skills_md_graph::analysis::{Diagnostic, has_errors, lint};
+use skills_md_graph::config::ScanConfig;
 use skills_md_graph::export::{ExportFormat, render_export};
 use skills_md_graph::graph::build_graph;
 use skills_md_graph::graph::dot::render_dot;
 use skills_md_graph::graph::stats::compute_stats;
-use skills_md_graph::parser::scan_directory;
+use skills_md_graph::parser::{scan_directory, scan_directory_async};
 use skills_md_graph::query::{query_deps, query_path, query_uses};
 
 #[test]
@@ -188,4 +190,49 @@ fn export_cypher_from_fixtures() {
 
     assert!(cypher.contains("CREATE (:Skill"));
     assert!(cypher.contains("DEPENDS_ON"));
+}
+
+// --- Epic 4: async scan ---
+
+#[tokio::test]
+async fn async_scan_fixtures_matches_sync() {
+    let sync_result = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let scan_config = ScanConfig::default();
+    let aliases = HashMap::new();
+
+    let async_result =
+        scan_directory_async(Path::new("tests/fixtures"), &scan_config, &aliases, false)
+            .await
+            .unwrap();
+
+    assert_eq!(async_result.skills.len(), sync_result.skills.len());
+
+    let mut sync_names: Vec<_> = sync_result.skills.iter().map(|s| &s.name).collect();
+    let mut async_names: Vec<_> = async_result.skills.iter().map(|s| &s.name).collect();
+    sync_names.sort();
+    async_names.sort();
+    assert_eq!(sync_names, async_names);
+}
+
+#[tokio::test]
+async fn async_scan_nonexistent_returns_error() {
+    let scan_config = ScanConfig::default();
+    let aliases = HashMap::new();
+
+    let result =
+        scan_directory_async(Path::new("nonexistent/path"), &scan_config, &aliases, false).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn async_scan_reports_warnings_for_invalid_files() {
+    let scan_config = ScanConfig::default();
+    let aliases = HashMap::new();
+
+    let result =
+        scan_directory_async(Path::new("tests/fixtures"), &scan_config, &aliases, false)
+            .await
+            .unwrap();
+
+    assert!(!result.warnings.is_empty());
 }
