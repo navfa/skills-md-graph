@@ -1,0 +1,40 @@
+{
+  "name": "skill-graph",
+  "displayName": "Skill Graph",
+  "description": "Navigate and analyze SKILL.md dependency graphs",
+  "version": "0.1.0",
+  "publisher": "skill-graph",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/*.md"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Skill Graph",
+      "properties": {
+        "skillGraph.cliPath": {
+          "type": "string",
+          "default": "skill-graph",
+          "description": "Path to the skill-graph CLI binary"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  }
+}
