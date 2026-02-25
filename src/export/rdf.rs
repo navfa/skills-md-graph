@@ -6,8 +6,16 @@ pub fn render_turtle(graph: &SkillGraph) -> String {
     let mut output = String::new();
 
     writeln!(output, "@prefix skill: <http://example.org/skill/> .").unwrap();
-    writeln!(output, "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .").unwrap();
-    writeln!(output, "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .").unwrap();
+    writeln!(
+        output,
+        "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> ."
+    )
+    .unwrap();
+    writeln!(
+        output,
+        "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> ."
+    )
+    .unwrap();
     writeln!(output).unwrap();
 
     for node_index in graph.inner.node_indices() {
@@ -15,18 +23,8 @@ pub fn render_turtle(graph: &SkillGraph) -> String {
         let escaped_description = node.description.replace('"', "\\\"");
 
         writeln!(output, "skill:{} rdf:type skill:Skill ;", node.name).unwrap();
-        writeln!(
-            output,
-            "    rdfs:label \"{}\" ;",
-            node.name
-        )
-        .unwrap();
-        writeln!(
-            output,
-            "    rdfs:comment \"{}\" .",
-            escaped_description
-        )
-        .unwrap();
+        writeln!(output, "    rdfs:label \"{}\" ;", node.name).unwrap();
+        writeln!(output, "    rdfs:comment \"{}\" .", escaped_description).unwrap();
         writeln!(output).unwrap();
     }
 

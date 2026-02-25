@@ -47,7 +47,10 @@ impl fmt::Display for Diagnostic {
                 write!(formatter, "error: circular dependency: {chain}")
             }
             Diagnostic::Isolated { skill_name } => {
-                write!(formatter, "info: skill \"{skill_name}\" is isolated (no connections)")
+                write!(
+                    formatter,
+                    "info: skill \"{skill_name}\" is isolated (no connections)"
+                )
             }
             Diagnostic::MissingDependency {
                 skill_name,
@@ -66,15 +69,12 @@ pub fn lint(graph: &SkillGraph) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
 
     for cycle in detect_cycles(graph) {
-        diagnostics.push(Diagnostic::Cycle {
-            skill_names: cycle,
-        });
+        diagnostics.push(Diagnostic::Cycle { skill_names: cycle });
     }
 
     for warning in &graph.warnings {
         if let Some((skill_part, dep_part)) = warning.split_once(": dependency \"") {
-            if let Some(dependency_name) = dep_part.strip_suffix("\" not found in scanned skills")
-            {
+            if let Some(dependency_name) = dep_part.strip_suffix("\" not found in scanned skills") {
                 diagnostics.push(Diagnostic::MissingDependency {
                     skill_name: skill_part.to_string(),
                     dependency_name: dependency_name.to_string(),
@@ -145,7 +145,11 @@ mod tests {
         let diagnostics = lint(&graph);
 
         assert!(has_errors(&diagnostics));
-        assert!(diagnostics.iter().any(|diagnostic| matches!(diagnostic, Diagnostic::Cycle { .. })));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|diagnostic| matches!(diagnostic, Diagnostic::Cycle { .. }))
+        );
     }
 
     #[test]

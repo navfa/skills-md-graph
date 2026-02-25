@@ -26,7 +26,10 @@ pub fn query_deps(graph: &SkillGraph, skill_name: &str) -> Option<Vec<String>> {
     let mut transitive_dependencies = Vec::new();
 
     while let Some(current_index) = stack.pop() {
-        for neighbor_index in graph.inner.neighbors_directed(current_index, Direction::Outgoing) {
+        for neighbor_index in graph
+            .inner
+            .neighbors_directed(current_index, Direction::Outgoing)
+        {
             if visited.insert(neighbor_index) {
                 transitive_dependencies.push(graph.inner[neighbor_index].name.clone());
                 stack.push(neighbor_index);
@@ -57,7 +60,11 @@ pub fn query_path(graph: &SkillGraph, from: &str, to: &str) -> Option<Vec<String
         let neighbors: Vec<_> = graph
             .inner
             .neighbors_directed(current_index, Direction::Outgoing)
-            .chain(graph.inner.neighbors_directed(current_index, Direction::Incoming))
+            .chain(
+                graph
+                    .inner
+                    .neighbors_directed(current_index, Direction::Incoming),
+            )
             .collect();
 
         for neighbor_index in neighbors {

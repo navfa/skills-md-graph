@@ -37,10 +37,7 @@ pub fn parse_skill_file(file_path: &Path) -> Result<Skill, SkillError> {
     })
 }
 
-fn collect_files(
-    directory_path: &Path,
-    extensions: &[String],
-) -> Result<Vec<PathBuf>, SkillError> {
+fn collect_files(directory_path: &Path, extensions: &[String]) -> Result<Vec<PathBuf>, SkillError> {
     if !directory_path.is_dir() {
         return Err(SkillError::DirectoryNotFound {
             path: directory_path.to_path_buf(),
@@ -52,10 +49,11 @@ fn collect_files(
         .filter_map(|entry| entry.ok())
         .filter(|entry| {
             entry.file_type().is_file()
-                && entry
-                    .path()
-                    .extension()
-                    .is_some_and(|ext| extensions.iter().any(|e| e == ext.to_string_lossy().as_ref()))
+                && entry.path().extension().is_some_and(|ext| {
+                    extensions
+                        .iter()
+                        .any(|e| e == ext.to_string_lossy().as_ref())
+                })
         })
         .map(|entry| entry.into_path())
         .collect();

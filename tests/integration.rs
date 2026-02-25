@@ -29,7 +29,10 @@ fn scan_fixtures_reports_warnings_for_invalid_files() {
 
     assert!(!skill_set.warnings.is_empty());
     assert!(
-        skill_set.warnings.iter().any(|warning| warning.contains("skill-invalid")),
+        skill_set
+            .warnings
+            .iter()
+            .any(|warning| warning.contains("skill-invalid")),
         "expected a warning about skill-invalid.md"
     );
 }
@@ -229,10 +232,9 @@ async fn async_scan_reports_warnings_for_invalid_files() {
     let scan_config = ScanConfig::default();
     let aliases = HashMap::new();
 
-    let result =
-        scan_directory_async(Path::new("tests/fixtures"), &scan_config, &aliases, false)
-            .await
-            .unwrap();
+    let result = scan_directory_async(Path::new("tests/fixtures"), &scan_config, &aliases, false)
+        .await
+        .unwrap();
 
     assert!(!result.warnings.is_empty());
 }

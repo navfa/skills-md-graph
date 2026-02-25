@@ -71,7 +71,8 @@ mod tests {
     #[test]
     fn valid_frontmatter_with_all_fields() {
         let content = "---\nname: my-skill\ndescription: A test skill\ndependencies:\n  - dep-a\ninputs:\n  - input-1\noutputs:\n  - output-1\n---\n\nBody content here.";
-        let (frontmatter, body) = extract_frontmatter(content, &test_path(), &no_aliases()).unwrap();
+        let (frontmatter, body) =
+            extract_frontmatter(content, &test_path(), &no_aliases()).unwrap();
 
         assert_eq!(frontmatter.name, "my-skill");
         assert_eq!(frontmatter.description, "A test skill");
@@ -84,7 +85,8 @@ mod tests {
     #[test]
     fn valid_frontmatter_with_minimal_fields() {
         let content = "---\nname: minimal\n---\n\nSome body.";
-        let (frontmatter, body) = extract_frontmatter(content, &test_path(), &no_aliases()).unwrap();
+        let (frontmatter, body) =
+            extract_frontmatter(content, &test_path(), &no_aliases()).unwrap();
 
         assert_eq!(frontmatter.name, "minimal");
         assert_eq!(frontmatter.description, "");
@@ -116,7 +118,8 @@ mod tests {
     #[test]
     fn empty_body_after_frontmatter() {
         let content = "---\nname: no-body\n---\n";
-        let (frontmatter, body) = extract_frontmatter(content, &test_path(), &no_aliases()).unwrap();
+        let (frontmatter, body) =
+            extract_frontmatter(content, &test_path(), &no_aliases()).unwrap();
 
         assert_eq!(frontmatter.name, "no-body");
         assert_eq!(body, "");

@@ -1,5 +1,5 @@
-use petgraph::algo::is_cyclic_directed;
 use petgraph::Direction;
+use petgraph::algo::is_cyclic_directed;
 
 use super::SkillGraph;
 
@@ -20,8 +20,14 @@ pub fn compute_stats(graph: &SkillGraph) -> GraphStats {
         .inner
         .node_indices()
         .filter(|&node_index| {
-            let incoming = graph.inner.edges_directed(node_index, Direction::Incoming).count();
-            let outgoing = graph.inner.edges_directed(node_index, Direction::Outgoing).count();
+            let incoming = graph
+                .inner
+                .edges_directed(node_index, Direction::Incoming)
+                .count();
+            let outgoing = graph
+                .inner
+                .edges_directed(node_index, Direction::Outgoing)
+                .count();
             incoming == 0 && outgoing == 0
         })
         .map(|node_index| graph.inner[node_index].name.clone())
@@ -39,7 +45,11 @@ impl std::fmt::Display for GraphStats {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(formatter, "Skills: {}", self.skill_count)?;
         writeln!(formatter, "Dependencies: {}", self.edge_count)?;
-        writeln!(formatter, "Cycles detected: {}", if self.has_cycles { "yes" } else { "no" })?;
+        writeln!(
+            formatter,
+            "Cycles detected: {}",
+            if self.has_cycles { "yes" } else { "no" }
+        )?;
 
         if self.orphan_skills.is_empty() {
             writeln!(formatter, "Orphan skills: none")?;

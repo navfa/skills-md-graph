@@ -140,9 +140,11 @@ mod tests {
         let graph = build_graph(&skill_set);
         let classified = classify_skills(&graph);
 
-        assert!(classified
-            .iter()
-            .all(|classification| classification.name != "middle"));
+        assert!(
+            classified
+                .iter()
+                .all(|classification| classification.name != "middle")
+        );
     }
 
     #[test]

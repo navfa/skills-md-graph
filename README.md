@@ -1,0 +1,150 @@
+[![CI](https://github.com/navfa/skills-md-graph/actions/workflows/ci.yml/badge.svg)](https://github.com/navfa/skills-md-graph/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-84%20passing-brightgreen)](https://github.com/navfa/skills-md-graph/actions)
+[![Crates.io](https://img.shields.io/crates/v/skills-md-graph.svg)](https://crates.io/crates/skills-md-graph)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+# skill-graph
+
+A CLI tool that turns plain Markdown files into a navigable dependency graph. Write your skills as `.md` files with YAML frontmatter, and `skill-graph` will parse them, detect issues, and let you query the relationships between them.
+
+## What it does
+
+You write files like this:
+
+```markdown
+---
+name: error-handling
+description: Master Rust error handling patterns
+dependencies:
+  - rust-basics
+---
+
+## Description
+
+This skill covers Result, Option, and the ? operator.
+```
+
+Then `skill-graph` can:
+
+- **Scan** a directory and parse all skill files
+- **Build** a dependency graph and render it as DOT/PNG
+- **Lint** for problems: cycles, orphans, missing dependencies
+- **Query** the graph: who depends on what, shortest paths
+- **Export** to RDF/Turtle or Cypher for Neo4j
+
+## Getting started
+
+```sh
+cargo install skills-md-graph
+```
+
+Or build from source:
+
+```sh
+git clone https://github.com/navfa/skills-md-graph.git
+cd skills-md-graph
+make build
+```
+
+## Usage
+
+```sh
+# Scan and list all skills
+skill-graph scan ./skills
+
+# Get JSON output
+skill-graph scan ./skills --json
+
+# Async scan with progress bar (useful for large vaults)
+skill-graph scan ./skills --progress --workers 8
+
+# Generate a dependency graph
+skill-graph graph ./skills
+skill-graph graph ./skills --png graph.png --stats
+
+# Lint for issues (returns exit code 1 if errors found, great for CI)
+skill-graph lint ./skills
+
+# Query the graph
+skill-graph query ./skills --uses rust-basics        # who depends on this?
+skill-graph query ./skills --deps error-handling      # transitive dependencies
+skill-graph query ./skills --path-between error-handling,rust-basics
+
+# Export for external tools
+skill-graph export ./skills --format rdf
+skill-graph export ./skills --format cypher
+```
+
+## Configuration
+
+Drop a `.skill-graph.toml` anywhere in your project tree. The CLI walks up parent directories to find it, just like `.gitignore`.
+
+```toml
+[schema]
+required_fields = ["name"]
+optional_fields = ["description", "dependencies", "inputs", "outputs"]
+
+# Use shorter names in your frontmatter
+[schema.aliases]
+deps = "dependencies"
+desc = "description"
+
+[scan]
+workers = 8
+extensions = ["md"]
+```
+
+## Benchmark
+
+On a dataset of 10,000 generated skill files:
+
+| Mode | Time | Speedup |
+|---|---|---|
+| Sync | ~410ms | baseline |
+| Async (4 workers) | ~357ms | 1.15x |
+| Async (8 workers) | ~270ms | 1.52x |
+
+Run `make bench` to reproduce on your machine.
+
+## VSCode Extension
+
+A lightweight VSCode extension lives in `vscode-extension/`. It spawns the CLI under the hood and gives you:
+
+- **Hover** — see a skill's description by hovering over its name in a dependency list
+- **Go-to-definition** — jump to the skill file from a dependency reference
+- **Diagnostics** — warnings for dependencies that don't match any known skill
+
+## Development
+
+```sh
+make check    # fmt + clippy + test in one shot
+make test     # run all tests
+make bench    # run the 10k file benchmark
+make lint     # cargo clippy
+```
+
+## Project structure
+
+```
+src/
+  cli/          # clap subcommands
+  config/       # .skill-graph.toml loading and schema aliases
+  parser/       # frontmatter extraction, markdown parsing, async scan
+  model/        # Skill and SkillSet data structures
+  graph/        # petgraph-based dependency graph, DOT rendering, stats
+  analysis/     # lint diagnostics: cycles (Tarjan SCC), isolation, missing deps
+  query/        # uses, deps, shortest path queries
+  export/       # RDF/Turtle and Cypher/Neo4j output
+  error.rs      # thiserror-based error types
+tests/
+  fixtures/     # sample skill files for integration tests
+  integration.rs
+benches/
+  bench_scan.rs # 10k file sync vs async benchmark
+vscode-extension/
+  src/          # TypeScript thin client
+```
+
+## License
+
+MIT

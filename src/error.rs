@@ -2,13 +2,17 @@ use std::path::PathBuf;
 
 #[derive(Debug, thiserror::Error)]
 pub enum SkillError {
-    #[error("{path}: invalid YAML frontmatter — {source}\n  hint: ensure the file starts with `---` and contains valid YAML")]
+    #[error(
+        "{path}: invalid YAML frontmatter — {source}\n  hint: ensure the file starts with `---` and contains valid YAML"
+    )]
     InvalidYaml {
         path: PathBuf,
         source: serde_yaml::Error,
     },
 
-    #[error("{path}: failed to read file — {source}\n  hint: check that the file exists and is readable")]
+    #[error(
+        "{path}: failed to read file — {source}\n  hint: check that the file exists and is readable"
+    )]
     FileRead {
         path: PathBuf,
         source: std::io::Error,
@@ -17,10 +21,14 @@ pub enum SkillError {
     #[error("directory not found: {path}\n  hint: provide a valid directory path")]
     DirectoryNotFound { path: PathBuf },
 
-    #[error("no .md skill files found in {path}\n  hint: add markdown files with YAML frontmatter to this directory")]
+    #[error(
+        "no .md skill files found in {path}\n  hint: add markdown files with YAML frontmatter to this directory"
+    )]
     NoSkillFiles { path: PathBuf },
 
-    #[error("graphviz `dot` command not found\n  hint: install graphviz (brew install graphviz / apt install graphviz)")]
+    #[error(
+        "graphviz `dot` command not found\n  hint: install graphviz (brew install graphviz / apt install graphviz)"
+    )]
     GraphvizNotFound,
 
     #[error("graphviz rendering failed: {message}")]

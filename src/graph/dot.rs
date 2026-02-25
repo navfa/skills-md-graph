@@ -61,17 +61,19 @@ pub fn render_png(graph: &SkillGraph, output_path: &Path) -> Result<(), SkillErr
 
     use std::io::Write as IoWrite;
     if let Some(ref mut stdin) = child.stdin {
-        stdin.write_all(dot_content.as_bytes()).map_err(|error| {
-            SkillError::GraphvizFailed {
+        stdin
+            .write_all(dot_content.as_bytes())
+            .map_err(|error| SkillError::GraphvizFailed {
                 message: error.to_string(),
-            }
-        })?;
+            })?;
     }
     drop(child.stdin.take());
 
-    let output = child.wait_with_output().map_err(|error| SkillError::GraphvizFailed {
-        message: error.to_string(),
-    })?;
+    let output = child
+        .wait_with_output()
+        .map_err(|error| SkillError::GraphvizFailed {
+            message: error.to_string(),
+        })?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);

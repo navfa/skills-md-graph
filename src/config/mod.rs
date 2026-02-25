@@ -140,7 +140,12 @@ mod tests {
         let config = Config::default();
 
         assert_eq!(config.schema.required_fields, vec!["name"]);
-        assert!(config.schema.optional_fields.contains(&"description".to_string()));
+        assert!(
+            config
+                .schema
+                .optional_fields
+                .contains(&"description".to_string())
+        );
         assert!(config.schema.aliases.is_empty());
         assert!(config.scan.workers > 0);
         assert_eq!(config.scan.extensions, vec!["md"]);
