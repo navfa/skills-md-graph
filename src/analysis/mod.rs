@@ -73,13 +73,17 @@ pub fn lint(graph: &SkillGraph) -> Vec<Diagnostic> {
     }
 
     for warning in &graph.warnings {
-        if let Some((skill_part, dep_part)) = warning.split_once(": dependency \"") {
-            if let Some(dependency_name) = dep_part.strip_suffix("\" not found in scanned skills") {
-                diagnostics.push(Diagnostic::MissingDependency {
-                    skill_name: skill_part.to_string(),
-                    dependency_name: dependency_name.to_string(),
-                });
-            }
+        let parsed = warning
+            .split_once(": dependency \"")
+            .and_then(|(skill, dep)| {
+                dep.strip_suffix("\" not found in scanned skills")
+                    .map(|d| (skill, d))
+            });
+        if let Some((skill_part, dependency_name)) = parsed {
+            diagnostics.push(Diagnostic::MissingDependency {
+                skill_name: skill_part.to_string(),
+                dependency_name: dependency_name.to_string(),
+            });
         }
     }
 
