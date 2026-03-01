@@ -25,6 +25,13 @@ pub fn build_graph(skill_set: &SkillSet) -> SkillGraph {
     let mut warnings = Vec::new();
 
     for skill in &skill_set.skills {
+        if node_indices.contains_key(&skill.name) {
+            warnings.push(format!(
+                "duplicate skill \"{}\" — keeping first occurrence",
+                skill.name
+            ));
+            continue;
+        }
         let node = SkillNode {
             name: skill.name.clone(),
             description: skill.description.clone(),
@@ -34,7 +41,9 @@ pub fn build_graph(skill_set: &SkillSet) -> SkillGraph {
     }
 
     for skill in &skill_set.skills {
-        let source_index = node_indices[&skill.name];
+        let Some(&source_index) = node_indices.get(&skill.name) else {
+            continue;
+        };
 
         for dependency_name in &skill.dependencies {
             match node_indices.get(dependency_name) {
@@ -132,6 +141,31 @@ mod tests {
         assert_eq!(graph.inner.node_count(), 0);
         assert_eq!(graph.inner.edge_count(), 0);
         assert!(graph.warnings.is_empty());
+    }
+
+    #[test]
+    fn deduplicates_skills_with_same_name() {
+        let skill_set = SkillSet {
+            skills: vec![
+                make_skill("alpha", vec![]),
+                make_skill("alpha", vec![]),
+                make_skill("beta", vec!["alpha"]),
+            ],
+            warnings: vec![],
+        };
+
+        let graph = build_graph(&skill_set);
+
+        assert_eq!(graph.inner.node_count(), 2);
+        assert_eq!(graph.inner.edge_count(), 1);
+        assert_eq!(
+            graph
+                .warnings
+                .iter()
+                .filter(|w| w.contains("duplicate skill"))
+                .count(),
+            1
+        );
     }
 
     #[test]
