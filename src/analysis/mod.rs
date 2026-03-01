@@ -27,6 +27,9 @@ pub enum Diagnostic {
         skill_name: String,
         dependency_name: String,
     },
+    DuplicateSkill {
+        skill_name: String,
+    },
 }
 
 impl Diagnostic {
@@ -34,6 +37,7 @@ impl Diagnostic {
         match self {
             Diagnostic::Cycle { .. } => Severity::Error,
             Diagnostic::MissingDependency { .. } => Severity::Warning,
+            Diagnostic::DuplicateSkill { .. } => Severity::Warning,
             Diagnostic::Isolated { .. } => Severity::Info,
         }
     }
@@ -61,6 +65,12 @@ impl fmt::Display for Diagnostic {
                     "warning: \"{skill_name}\" depends on \"{dependency_name}\" which was not found"
                 )
             }
+            Diagnostic::DuplicateSkill { skill_name } => {
+                write!(
+                    formatter,
+                    "warning: duplicate skill \"{skill_name}\" — keeping first occurrence"
+                )
+            }
         }
     }
 }
@@ -73,6 +83,16 @@ pub fn lint(graph: &SkillGraph) -> Vec<Diagnostic> {
     }
 
     for warning in &graph.warnings {
+        if let Some(skill_name) = warning
+            .strip_prefix("duplicate skill \"")
+            .and_then(|rest| rest.strip_suffix("\" — keeping first occurrence"))
+        {
+            diagnostics.push(Diagnostic::DuplicateSkill {
+                skill_name: skill_name.to_string(),
+            });
+            continue;
+        }
+
         let parsed = warning
             .split_once(": dependency \"")
             .and_then(|(skill, dep)| {
@@ -202,6 +222,23 @@ mod tests {
 
         assert!(output.contains("circular dependency"));
         assert!(output.contains("alpha -> beta"));
+    }
+
+    #[test]
+    fn lint_detects_duplicate_skill() {
+        let skill_set = SkillSet {
+            skills: vec![make_skill("alpha", vec![]), make_skill("alpha", vec![])],
+            warnings: vec![],
+        };
+        let graph = build_graph(&skill_set);
+        let diagnostics = lint(&graph);
+
+        let duplicates: Vec<_> = diagnostics
+            .iter()
+            .filter(|diagnostic| matches!(diagnostic, Diagnostic::DuplicateSkill { .. }))
+            .collect();
+        assert_eq!(duplicates.len(), 1);
+        assert!(!has_errors(&diagnostics));
     }
 
     #[test]
