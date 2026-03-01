@@ -15,7 +15,7 @@ fn scan_fixtures_finds_valid_skills() {
     let fixtures_path = Path::new("tests/fixtures");
     let skill_set = scan_directory(fixtures_path).unwrap();
 
-    assert_eq!(skill_set.skills.len(), 2);
+    assert_eq!(skill_set.skills.len(), 3);
 
     let skill_names: Vec<&str> = skill_set.skills.iter().map(|s| s.name.as_str()).collect();
     assert!(skill_names.contains(&"rust-basics"));
@@ -60,7 +60,7 @@ fn scan_fixtures_produces_valid_json() {
     let reparsed: serde_json::Value = serde_json::from_str(&json_output).unwrap();
 
     assert!(reparsed["skills"].is_array());
-    assert_eq!(reparsed["skills"].as_array().unwrap().len(), 2);
+    assert_eq!(reparsed["skills"].as_array().unwrap().len(), 3);
 }
 
 #[test]
@@ -109,9 +109,42 @@ fn graph_warns_on_missing_dependency_in_fixtures() {
     let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
     let graph = build_graph(&skill_set);
 
-    // rust-basics has no deps, error-handling depends on rust-basics (exists)
-    // no missing deps in our current fixtures
-    assert!(graph.warnings.is_empty());
+    // No missing deps, but there is a duplicate skill warning
+    assert!(
+        !graph
+            .warnings
+            .iter()
+            .any(|w| w.contains("not found in scanned skills"))
+    );
+}
+
+// --- Epic 5: deduplication ---
+
+#[test]
+fn graph_deduplicates_skills_with_same_name() {
+    let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let graph = build_graph(&skill_set);
+
+    assert_eq!(graph.inner.node_count(), 2);
+    assert!(
+        graph
+            .warnings
+            .iter()
+            .any(|w| w.contains("duplicate skill") && w.contains("rust-basics"))
+    );
+}
+
+#[test]
+fn lint_detects_duplicate_skill_in_fixtures() {
+    let skill_set = scan_directory(Path::new("tests/fixtures")).unwrap();
+    let graph = build_graph(&skill_set);
+    let diagnostics = lint(&graph);
+
+    let duplicates: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| matches!(d, Diagnostic::DuplicateSkill { .. }))
+        .collect();
+    assert_eq!(duplicates.len(), 1);
 }
 
 // --- Epic 3: analysis, query, export ---
@@ -210,8 +243,8 @@ async fn async_scan_fixtures_matches_sync() {
 
     assert_eq!(async_result.skills.len(), sync_result.skills.len());
 
-    let mut sync_names: Vec<_> = sync_result.skills.iter().map(|s| &s.name).collect();
-    let mut async_names: Vec<_> = async_result.skills.iter().map(|s| &s.name).collect();
+    let mut sync_names: Vec<String> = sync_result.skills.iter().map(|s| s.name.clone()).collect();
+    let mut async_names: Vec<String> = async_result.skills.iter().map(|s| s.name.clone()).collect();
     sync_names.sort();
     async_names.sort();
     assert_eq!(sync_names, async_names);
