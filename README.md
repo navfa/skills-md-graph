@@ -77,21 +77,39 @@ skill-graph export ./skills --format cypher
 
 ## Configuration
 
-Drop a `.skill-graph.toml` anywhere in your project tree. The CLI walks up parent directories to find it, just like `.gitignore`.
+Configuration is **optional**. Everything works out of the box with sensible defaults (only `name` is required in frontmatter, all other fields are optional).
+
+If you want to customize behavior, drop a `.skill-graph.toml` anywhere in your project tree. The CLI walks up parent directories to find it, just like `.gitignore`. You can also pass one explicitly with `--config path/to/config.toml`.
 
 ```toml
 [schema]
+# Only "name" is required by default. Add more if you want stricter validation.
 required_fields = ["name"]
 optional_fields = ["description", "dependencies", "inputs", "outputs"]
 
-# Use shorter names in your frontmatter
+# Define shortcuts for frontmatter fields.
+# With this config, you can write "deps:" instead of "dependencies:" in your files.
 [schema.aliases]
 deps = "dependencies"
 desc = "description"
 
 [scan]
+# Number of parallel workers for async scan (default: number of CPUs)
 workers = 8
+# File extensions to scan (default: ["md"])
 extensions = ["md"]
+```
+
+### Minimal skill file
+
+Only `name` is required. Everything else is optional:
+
+```markdown
+---
+name: my-skill
+---
+
+Content goes here.
 ```
 
 ## Benchmark
