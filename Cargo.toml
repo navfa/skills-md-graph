@@ -2,6 +2,11 @@
 name = "skills-md-graph"
 version = "0.1.0"
 edition = "2024"
+default-run = "skill-graph"
+
+[[bin]]
+name = "skill-graph"
+path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
