@@ -1,5 +1,5 @@
 [![CI](https://github.com/navfa/skills-md-graph/actions/workflows/ci.yml/badge.svg)](https://github.com/navfa/skills-md-graph/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-88%20passing-brightgreen)](https://github.com/navfa/skills-md-graph/actions)
+[![Tests](https://github.com/navfa/skills-md-graph/actions/workflows/ci.yml/badge.svg)](https://github.com/navfa/skills-md-graph/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/skills-md-graph.svg)](https://crates.io/crates/skills-md-graph)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
