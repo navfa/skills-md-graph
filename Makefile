@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt check bench clean
+.PHONY: build test lint fmt check bench clean install scan graph lint-skills query export
 
 build:
 	cargo build --release
@@ -20,5 +20,23 @@ bench:
 clean:
 	cargo clean
 
+install:
+	cargo install --path .
+
 run:
 	cargo run -- $(ARGS)
+
+scan:
+	cargo run -- scan $(path)
+
+graph:
+	cargo run -- graph $(path) $(ARGS)
+
+lint-skills:
+	cargo run -- lint $(path)
+
+query:
+	cargo run -- query $(path) $(ARGS)
+
+export:
+	cargo run -- export $(path) $(ARGS)
