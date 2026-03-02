@@ -3,6 +3,12 @@ name = "skills-md-graph"
 version = "0.1.0"
 edition = "2024"
 default-run = "skill-graph"
+description = "CLI that turns Markdown skill files into a navigable dependency graph"
+license = "MIT"
+repository = "https://github.com/navfa/skills-md-graph"
+readme = "README.md"
+keywords = ["cli", "graph", "markdown", "yaml", "ontology"]
+categories = ["command-line-utilities", "development-tools"]
 
 [[bin]]
 name = "skill-graph"
