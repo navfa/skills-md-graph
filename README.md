@@ -1,5 +1,5 @@
 [![CI](https://github.com/navfa/skills-md-graph/actions/workflows/ci.yml/badge.svg)](https://github.com/navfa/skills-md-graph/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-84%20passing-brightgreen)](https://github.com/navfa/skills-md-graph/actions)
+[![Tests](https://img.shields.io/badge/tests-88%20passing-brightgreen)](https://github.com/navfa/skills-md-graph/actions)
 [![Crates.io](https://img.shields.io/crates/v/skills-md-graph.svg)](https://crates.io/crates/skills-md-graph)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -24,7 +24,13 @@ dependencies:
 This skill covers Result, Option, and the ? operator.
 ```
 
-Then `skill-graph` can:
+Then `skill-graph` can scan the directory and produce a visual graph:
+
+<p align="center">
+  <img src="graph.png" alt="Example graph of isolated skills without dependencies" width="220" />
+</p>
+
+It can:
 
 - **Scan** a directory and parse all skill files
 - **Build** a dependency graph and render it as DOT/PNG
@@ -34,17 +40,47 @@ Then `skill-graph` can:
 
 ## Getting started
 
+Install the `skill-graph` binary globally via crates.io:
+
 ```sh
 cargo install skills-md-graph
 ```
 
-Or build from source:
+The crate is called `skills-md-graph`, but the binary it installs is `skill-graph`.
+
+If `~/.cargo/bin` isn't already in your PATH, add it. For fish shell:
+
+```sh
+fish_add_path ~/.cargo/bin
+```
+
+For bash/zsh, add `export PATH="$HOME/.cargo/bin:$PATH"` to your shell profile.
+
+Alternatively, build from source:
 
 ```sh
 git clone https://github.com/navfa/skills-md-graph.git
 cd skills-md-graph
 make build
 ```
+
+Once installed, navigate to any project that contains `.md` skill files and run:
+
+```sh
+skill-graph scan .
+```
+
+A valid skill file is any Markdown file with YAML frontmatter. The only required field is `name` — everything else is optional:
+
+```markdown
+---
+name: my-skill
+---
+
+Your content here.
+```
+
+Add `description`, `dependencies`, or any other fields when you need them. See the [Configuration](#configuration) section for how to customize validation.
 
 ## Usage
 
@@ -68,7 +104,7 @@ skill-graph lint ./skills
 # Query the graph
 skill-graph query ./skills --uses rust-basics        # who depends on this?
 skill-graph query ./skills --deps error-handling      # transitive dependencies
-skill-graph query ./skills --path-between error-handling,rust-basics
+skill-graph query ./skills --path-between error-handling rust-basics
 
 # Export for external tools
 skill-graph export ./skills --format rdf
@@ -139,6 +175,19 @@ make check    # fmt + clippy + test in one shot
 make test     # run all tests
 make bench    # run the 10k file benchmark
 make lint     # cargo clippy
+make install  # install skill-graph to ~/.cargo/bin
+```
+
+### Quick commands with `path`
+
+Run any CLI command against an external project without leaving this repo:
+
+```sh
+make scan path=some-path
+make graph path=some-path ARGS="--png graph.png --stats"
+make lint-skills path=some-path
+make query path=some-path ARGS="--uses rust-basics"
+make export path=some-path ARGS="--format rdf"
 ```
 
 ## Project structure
